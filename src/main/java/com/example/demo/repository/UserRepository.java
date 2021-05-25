@@ -70,10 +70,12 @@ public class UserRepository {
 
         StringBuilder sb = new StringBuilder("DELETE FROM ")
                 .append(TABLE_NAME)
-                .append(" WHERE id = ")
-                .append(email).append(";");
+                .append(" WHERE email = '")
+                .append(email).append("';");
         final String query = sb.toString();
-        session.execute(query);
+        if(!session.execute(query).wasApplied()){
+            throw new UserParameterException(List.of("User not found"));
+        }
     }
 
     public User selectByEmail(String email) {
