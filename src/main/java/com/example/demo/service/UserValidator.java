@@ -24,7 +24,7 @@ public class UserValidator implements Validator {
         User user = (User) o;
 
         if (!isAgeValid(user)) {
-            errors.reject("","User age");
+            errors.reject("","User is underage");
         }
 
     }

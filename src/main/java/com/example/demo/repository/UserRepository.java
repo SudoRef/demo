@@ -4,6 +4,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.example.demo.domain.User;
+import com.example.demo.exceptions.UserParameterException;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
@@ -56,10 +57,12 @@ public class UserRepository {
                     .append(user.getName())
                     .append("', '")
                     .append(user.getPassword())
-                .append("');");
+                .append("') IF NOT EXISTS;");
 
         final String query = sb.toString();
-        session.execute(query);
+        if(!session.execute(query).wasApplied()){
+            throw new UserParameterException(List.of("Email is already registered"));
+        }
 
     }
 
@@ -89,6 +92,10 @@ public class UserRepository {
             User s = new User( r.getString("name"),
                    r.getTimestamp("birthdate"), r.getString("email"),r.getString("password"));
             users.add(s);
+        }
+
+        if(users.isEmpty()){
+            throw new UserParameterException(List.of("User not found"));
         }
         return users.get(0);
 
