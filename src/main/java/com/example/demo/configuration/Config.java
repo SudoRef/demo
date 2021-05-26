@@ -4,6 +4,7 @@ package com.example.demo.configuration;
 import com.datastax.driver.core.Session;
 import com.example.demo.CassandraConnector;
 import com.example.demo.repository.KeyspaceRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,11 @@ public class Config {
         KeyspaceRepository keyspaceRepository = new KeyspaceRepository(session);
         keyspaceRepository.useKeyspace("users");
         return keyspaceRepository;
+    }
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
     }
 
 }

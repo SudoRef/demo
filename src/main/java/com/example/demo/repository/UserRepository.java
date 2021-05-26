@@ -4,6 +4,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.example.demo.domain.User;
+import com.example.demo.exceptions.UserParameterException;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
@@ -18,7 +19,7 @@ public class UserRepository {
     private final Session session;
 
     public UserRepository(Session session) {
-      this.session = session;
+        this.session = session;
     }
 
     /**
@@ -26,69 +27,82 @@ public class UserRepository {
      */
     public void createTable() {
 
-        StringBuilder sb = new StringBuilder("CREATE TABLE IF NOT EXISTS ")
-                .append(TABLE_NAME)
-                .append("(").append("id uuid PRIMARY KEY, ")
-                .append("name text,")
-                .append("birthdate timestamp,")
-                .append("email text,")
-                .append("password text);");
-
-        final String query = sb.toString();
+        final String query = "CREATE TABLE IF NOT EXISTS " +
+                TABLE_NAME +
+                "(" + "id uuid PRIMARY KEY, " +
+                "name text," +
+                "birthdate timestamp," +
+                "email text," +
+                "password text);";
         session.execute(query);
 
     }
 
     /**
-     * Insert a row in the table books. 
-     * 
-     * @param user
+     * Insert a row in the table Users.
+     *
+     * @param user user
      */
     public void insertUser(User user) {
-        StringBuilder sb = new StringBuilder("INSERT INTO ")
-                .append(TABLE_NAME)
-                .append("(email, birthdate, name, password) ")
-                .append("VALUES ('")
-                    .append(user.getEmail())
-                    .append("', '")
-                    .append(Timestamp.from(Instant.ofEpochMilli(user.getBirthdate().getTime())))
-                    .append("', '")
-                    .append(user.getName())
-                    .append("', '")
-                    .append(user.getPassword())
-                .append("');");
 
-        final String query = sb.toString();
-        session.execute(query);
+        final String query = "INSERT INTO " +
+                TABLE_NAME +
+                "(email, birthdate, name, password) " +
+                "VALUES ('" +
+                user.getEmail() +
+                "', '" +
+                Timestamp.from(Instant.ofEpochMilli(user.getBirthdate().getTime())) +
+                "', '" +
+                user.getName() +
+                "', '" +
+                user.getPassword() +
+                "') IF NOT EXISTS;";
+        if (!session.execute(query).wasApplied()) {
+            throw new UserParameterException(List.of("Email is already registered"));
+        }
 
     }
 
-    public void deleteUser(String email){
+    /**
+     * Delete user from user table
+     * @param email user's email
+     */
+    public void deleteUser(String email) {
 
-        StringBuilder sb = new StringBuilder("DELETE FROM ")
-                .append(TABLE_NAME)
-                .append(" WHERE id = ")
-                .append(email).append(";");
-        final String query = sb.toString();
-        session.execute(query);
+        final String query = "DELETE FROM " +
+                TABLE_NAME +
+                " WHERE email = '" +
+                email + "';";
+        if (!session.execute(query).wasApplied()) {
+            throw new UserParameterException(List.of("User not found"));
+        }
     }
 
+    /**
+     * Select user by email
+     * @param email user's email
+     *
+     * @return found uses
+     */
     public User selectByEmail(String email) {
-        StringBuilder sb = new StringBuilder("SELECT * FROM ")
-                .append(TABLE_NAME)
-                .append(" WHERE email = '")
-                .append(email).append("';");
 
-        final String query = sb.toString();
+        final String query = "SELECT * FROM " +
+                TABLE_NAME +
+                " WHERE email = '" +
+                email + "';";
 
         ResultSet rs = session.execute(query);
 
         List<User> users = new ArrayList<>();
 
         for (Row r : rs) {
-            User s = new User( r.getString("name"),
-                   r.getTimestamp("birthdate"), r.getString("email"),r.getString("password"));
+            User s = new User(r.getString("name"),
+                    r.getTimestamp("birthdate"), r.getString("email"), r.getString("password"));
             users.add(s);
+        }
+
+        if (users.isEmpty()) {
+            throw new UserParameterException(List.of("User not found"));
         }
         return users.get(0);
 
@@ -97,13 +111,12 @@ public class UserRepository {
 
     /**
      * Delete table.
-     * 
+     *
      * @param tableName the name of the table to delete.
      */
     public void deleteTable(String tableName) {
-        StringBuilder sb = new StringBuilder("DROP TABLE IF EXISTS ").append(tableName);
 
-        final String query = sb.toString();
+        final String query = "DROP TABLE IF EXISTS " + tableName;
         session.execute(query);
     }
 }

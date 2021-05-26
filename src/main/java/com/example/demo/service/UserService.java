@@ -1,8 +1,10 @@
 package com.example.demo.service;
 
 import com.example.demo.domain.User;
+import com.example.demo.domain.UserDTO;
 import com.example.demo.exceptions.UserParameterException;
 import com.example.demo.repository.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
@@ -15,10 +17,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserValidator validator;
+    private final ModelMapper modelMapper;
 
-    public UserService(UserRepository userRepository, UserValidator validator) {
+    public UserService(UserRepository userRepository, UserValidator validator, ModelMapper modelMapper) {
         this.userRepository = userRepository;
         this.validator = validator;
+        this.modelMapper = modelMapper;
     }
 
     public User getUserByEmail(String email) {
@@ -42,5 +46,9 @@ public class UserService {
 
     public void deleteUser(String email){
         userRepository.deleteUser(email);
+    }
+
+    public UserDTO convertToDto(User user) {
+        return modelMapper.map(user, UserDTO.class);
     }
 }

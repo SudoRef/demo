@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class UserExceptionHandling {
 
-    private static final String BAD_PARAMETER = "bad input";
+    private static final String BAD_PARAMETER = "invalid input";
 
     @ExceptionHandler(UserParameterException.class)
     public ResponseEntity<Error> handleValidationException(UserParameterException ex) {
